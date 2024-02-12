@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>To-Do List</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;700&display=swap">
+<style>
+    body {
+        font-family: 'Roboto', sans-serif;
+        margin: 0;
+        padding: 0;
+        background-color: #1b262c; /* Dark blue */
+        color: #fff;
+    }
+
+    #header-container {
+        text-align: center;
+        color: #fff;
+        padding: 20px;
+    }
+
+    #todo-container {
+        width: 90%;
+        max-width: 600px;
+        margin: 20px auto;
+        background-color: #0f4c75; /* Dark teal */
+        padding: 20px;
+        border-radius: 10px;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    input[type="text"],
+    input[type="datetime-local"] {
+        width: calc(100% - 30px);
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        color: #333;
+        background-color: #fff;
+    }
+
+    ul {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    li {
+        margin-bottom: 8px;
+        padding: 10px;
+        background-color: #3282b8; /* Dark cerulean */
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        color: #fff;
+    }
+
+    li.completed {
+        text-decoration: line-through;
+        color: #888;
+    }
+
+    li button {
+        background-color: #eb5e28; /* Bright orange */
+        color: #fff;
+        border: none;
+        border-radius: 50%;
+        padding: 8px;
+        cursor: pointer;
+        margin-left: auto;
+    }
+
+    .options {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+    }
+
+    .option-btn {
+        margin-top: 10px;
+        background-color: #1b262c; /* Dark blue */
+        border: 1px solid #fff;
+        color: #fff;
+        padding: 12px 24px;
+        text-align: center;
+        text-decoration: none;
+        display: inline-block;
+        font-size: 16px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+    }
+
+    .option-btn:hover {
+        background-color: #0f4c75; /* Dark teal */
+    }
+
+    /* Responsive styles */
+    @media screen and (max-width: 600px) {
+        #todo-container {
+            width: 95%;
+        }
+        .options {
+            flex-direction: column;
+            align-items: center;
+        }
+    }
+    
+    #time-container {
+        background-color: #1b262c; /* Dark blue */
+        color: #fff;
+        text-align: center;
+        padding: 10px;
+        margin-bottom: 20px;
+        border-radius: 5px;
+    }
+    
+    #time-container p {
+        margin: 0;
+        font-size: 18px;
+    }
+
+    .copyright {
+        text-align: center;
+        margin-top: 20px;
+        color: #ccc;
+    }
+</style>
+</head>
+<body>
+
+<div id="header-container">
+    <h1>To-Do List App</h1>
+    <p>This app helps you organize your tasks efficiently. Keep track of your tasks, set due dates, and manage your to-do list effectively.</p>
+</div>
+
+<div id="time-container">
+    <p id="current-time"></p>
+    <p>Time is precious. Don't waste it. Use this app to organize your tasks effectively!</p>
+</div>
+
+<div id="todo-container">
+    <h2>To-Do List</h2>
+    <input type="text" id="task-input" placeholder="Add new task...">
+    <input type="datetime-local" id="due-date" placeholder="Due date and time...">
+    <div class="options">
+        <button class="option-btn" id="dismiss-btn">Dismiss</button>
+        <button class="option-btn" id="snooze-btn">Snooze</button>
+        <button class="option-btn" id="mark-done-btn">Mark as Done</button>
+    </div>
+    <ul id="task-list"></ul>
+</div>
+
+<div class="copyright">
+    <p>&copy; 2024 Mueez. All rights reserved.</p>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    const taskInput = document.getElementById('task-input');
+    const dueDateInput = document.getElementById('due-date');
+    const taskList = document.getElementById('task-list');
+    const dismissBtn = document.getElementById('dismiss-btn');
+    const snoozeBtn = document.getElementById('snooze-btn');
+    const markDoneBtn = document.getElementById('mark-done-btn');
+    const currentTime = document.getElementById('current-time');
+
+    // Function to display current time
+    function displayCurrentTime() {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+        currentTime.textContent = `Current Time: ${timeString}`;
+    }
+
+    // Update current time every second
+    setInterval(displayCurrentTime, 1000);
+
+    // Load tasks from local storage
+    let tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+
+    // Function to render tasks
+    function renderTasks() {
+        taskList.innerHTML = '';
+        tasks.forEach((task, index) => {
+            const listItem = document.createElement('li');
+            listItem.textContent = `${task.text} - Due: ${task.dueDate}`;
+            if (task.completed) {
+                listItem.classList.add('completed');
+            }
+            const deleteButton = document.createElement('button');
+            deleteButton.textContent = 'x';
+            deleteButton.addEventListener('click', () => {
+                tasks.splice(index, 1);
+                renderTasks();
+                saveTasks();
+            });
+            listItem.appendChild(deleteButton);
+            listItem.addEventListener('click', () => {
+                task.completed = !task.completed;
+                renderTasks();
+                saveTasks();
+            });
+            taskList.appendChild(listItem);
+        });
+    }
+
+    // Function to save tasks to local storage
+    function saveTasks() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    // Event listener for adding new task
+    taskInput.addEventListener('keypress', function (e) {
+        if (e.key === 'Enter' && taskInput.value.trim() !== '') {
+            const newTask = {
+                text: taskInput.value,
+                dueDate: dueDateInput.value,
+                completed: false
+            };
+            tasks.push(newTask);
+            taskInput.value = '';
+            dueDateInput.value = '';
+            renderTasks();
+            saveTasks();
+        }
+    });
+
+    // Option buttons functionality
+    dismissBtn.addEventListener('click', () => {
+        // Dismiss the first task in the list
+        if (tasks.length > 0) {
+            tasks.splice(0, 1);
+            renderTasks();
+            saveTasks();
+        }
+    });
+
+    snoozeBtn.addEventListener('click', () => {
+        // Snooze the first task in the list by 15 minutes
+        if (tasks.length > 0) {
+            const now = new Date();
+            const snoozeTime = new Date(now.getTime() + 15 * 60000); // 15 minutes
+            tasks[0].dueDate = snoozeTime.toISOString().slice(0, -8); // Update due date
+            renderTasks();
+            saveTasks();
+        }
+    });
+
+    markDoneBtn.addEventListener('click', () => {
+        // Mark the first task in the list as done
+        if (tasks.length > 0) {
+            tasks[0].completed = true;
+            renderTasks();
+            saveTasks();
+        }
+    });
+
+    // Initial rendering of tasks
+    renderTasks();
+    // Display current time
+    displayCurrentTime();
+});
+</script>
+
+</body>
+</html>
